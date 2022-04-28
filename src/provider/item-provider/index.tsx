@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { IStock } from "../../api";
 import { IITem, IItemProva, IItemResponse } from "../../interfaces/i-items";
 
 interface IItemprovider {}
@@ -20,7 +21,13 @@ export interface IItemContext {
   setTakeId: (id: number) => void;
   editStock: (id: number) => void;
   selectedStockData: IItemProva | undefined;
-  /* selectedIsinData: IITem | undefined; */
+  date: string;
+  dataProvider: IStock[];
+  setDataProvider: (stock: IStock[]) => void;
+  stockList: IStock[];
+  setStockList: (stockList: IStock[]) => void;
+  isOpen: boolean;
+  setIsOpen: (visible: boolean) => void;
 }
 
 const initialContext: IItemContext = {
@@ -46,77 +53,18 @@ const initialContext: IItemContext = {
   setSelectedIsin: () => {},
   editStock: () => {},
   selectedStockData: undefined,
-  /* selectedIsinData: undefined, */
+  date: "",
+  dataProvider: [],
+  setDataProvider: () => {},
+  setStockList: () => {},
+  stockList: [],
+  isOpen: false,
+  setIsOpen: () => {},
 };
 const ItemContext = createContext<IItemContext>(initialContext);
 
 const ItemProvider: FC<IItemprovider> = (props) => {
   const [selectedIsin, setSelectedIsin] = useState<number | undefined>();
-  const initialItemState = localStorage?.getItem("items");
-  const parsedItems: IITem[] = initialItemState
-    ? JSON.parse(initialItemState)
-    : [
-        {
-          id: 0,
-          name: "item1",
-          description: "",
-          url: "",
-          price: 0,
-          quantity: 0,
-          isin: "",
-          position: 0,
-        },
-        {
-          id: 1,
-          name: "item2",
-          description: "",
-          url: "",
-          price: 0,
-          quantity: 0,
-          isin: "",
-          position: 20,
-        },
-        {
-          id: 2,
-          name: "item3",
-          description: "",
-          url: "",
-          price: 0,
-          quantity: 0,
-          isin: "",
-          position: 40,
-        },
-        {
-          id: 3,
-          name: "item4",
-          description: "",
-          url: "",
-          price: 0,
-          quantity: 0,
-          isin: "",
-          position: 60,
-        },
-        {
-          id: 4,
-          name: "item5",
-          description: "",
-          url: "",
-          price: 0,
-          quantity: 0,
-          isin: "",
-          position: 80,
-        },
-        {
-          id: 5,
-          name: "item6",
-          description: "",
-          url: "",
-          price: 0,
-          quantity: 0,
-          isin: "",
-          position: 100,
-        },
-      ];
   const [items, setItems] = useState<IItemResponse>({
     data: [
       {
@@ -132,22 +80,34 @@ const ItemProvider: FC<IItemprovider> = (props) => {
   });
   const [totalItems, setTotalItems] = useState<number>(0);
   const [takeId, setTakeId] = useState<number>(-1);
-  const [selectedStock, setSelectedStock] = useState<number | undefined>(
-    undefined
-  );
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [dataProvider, setDataProvider] = useState<IStock[]>([]);
+  const [selectedStock, setSelectedStock] = useState<number>(0);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [stockList, setStockList] = useState<IStock[]>([]);
 
   let selectedStockData: IItemProva | undefined;
-  if (selectedStock !== undefined) {
-    selectedStockData = items.data[selectedStock].attributes;
+  if (selectedStock !== 0) {
+    let selectItem = items.data.filter((item) => {
+      const { attributes, id } = item;
+      if (item.id === selectedStock) {
+        return true;
+      }
+    });
+
+    selectedStockData = selectItem[0].attributes;
   }
 
-  console.log(selectedStockData);
-  console.log(selectedStock);
+  /* console.log(selectedStockData); */
 
   const editStock = (id: number) => {
     setSelectedStock(id);
+    setIsOpen(true);
   };
+
+  /* console.log(selectedStock); */
+
+  let current: Date = new Date();
+  let date: string = `${current.getFullYear()}-03-18`;
 
   /*   let totalPortfolio = items.map((item) => {
     return item.price * item.quantity;
@@ -171,7 +131,13 @@ const ItemProvider: FC<IItemprovider> = (props) => {
     setSelectedIsin,
     editStock,
     selectedStockData,
-    /* selectedIsinData, */
+    date,
+    dataProvider,
+    setDataProvider,
+    setStockList,
+    stockList,
+    isOpen,
+    setIsOpen,
   };
 
   return (

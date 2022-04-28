@@ -14,8 +14,14 @@ import {
   FormErrorMessage,
   FormHelperText,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
-import { fetchApiGet, fetchApiPost, fetchApiPut } from "../api";
+import React, { useEffect, useState } from "react";
+import {
+  fetchApiGet,
+  fetchApiPost,
+  fetchApiPut,
+  fetchGetItems,
+  IStock,
+} from "../api";
 import {
   IITem,
   IItemIdAttributes,
@@ -23,12 +29,18 @@ import {
   IItemResponse,
 } from "../interfaces/i-items";
 import { IItemContext, useItem } from "../provider/item-provider";
+import { useProjectStore } from "../zust";
 
 function FormTitle() {
-  const { setItems, selectedStockData }: IItemContext = useItem();
+  const { selectedStockData }: IItemContext = useItem();
+
+  const setItems = useProjectStore((state) => state.setItems);
+  const setIsOpen = useProjectStore((state) => state.setIsOpen);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [error, setError] = useState<boolean>(false);
-  const initialState: IItemProva = { isin: "", price: 0, quantity: 0 };
+
+  const initialState: IItemProva = { isin: "initial", price: 0, quantity: 0 };
   const [formData, setFormData] = useState<IItemProva>(
     selectedStockData ? selectedStockData : initialState
   );
@@ -51,12 +63,28 @@ function FormTitle() {
     });
   };
 
-  console.log(formData);
-  console.log(selectedStockData);
+  /* console.log(formData); */
+
+  const resetFormData = () => {
+    setFormData(initialState);
+  };
 
   const onUpdate = (id: number) => {
     fetchApiPut(`stocks/${id}`, formData);
   };
+
+  const buttonClose = () => {
+    setIsOpen(false);
+    resetFormData();
+  };
+
+  /* const getItems = (isin: string) => {
+    fetchGetItems<IStock>(`${isin}/range/1/day/${date}/${date}`).then(
+      (data) => {
+        setDataProvider(data);
+      }
+    );
+  }; */
 
   /*   const [itemData, setItemData] = useState<IITem>(
     selectedIsinData ? selectedIsinData : initialItemState
@@ -124,10 +152,22 @@ function FormTitle() {
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={onClose}>
+            <Button
+              colorScheme="blue"
+              mr={3}
+              onClick={() => {
+                buttonClose();
+              }}
+            >
               Close
             </Button>
-            <Button variant="ghost" onClick={onSubmit}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                onSubmit();
+                /* getItems(formData.isin); */
+              }}
+            >
               Invia
             </Button>
             <Button variant="ghost" onClick={() => {}}>

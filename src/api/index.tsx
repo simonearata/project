@@ -1,6 +1,30 @@
 import { apiConfig } from "../config";
 import { IItemProva } from "../interfaces/i-items";
 
+export interface IStock {
+  status: string;
+  from: string;
+  symbol: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  afterHours: number;
+  preMarket: number;
+}
+
+export interface Result {
+  v: number;
+  vw: number;
+  o: number;
+  c: number;
+  h: number;
+  l: number;
+  t: number;
+  n: number;
+}
+
 export function fetchApiGet<T>(api: string): Promise<T> {
   const { dev, qlt, prod } = apiConfig?.environments;
   const url = `${prod?.apiUrl}${api}`;
@@ -86,3 +110,10 @@ export const fetchApiDelete = (api: string) => {
     },
   }).then((response) => response.json());
 };
+
+export function fetchGetItems<T>(api: string): Promise<T> {
+  const { dev, qlt, prod } = apiConfig?.environmentsPolygons;
+  const url = `${prod?.apiUrl}${api}apiKey=${prod?.apiKey}`;
+
+  return fetch(url).then((response) => response.json());
+}

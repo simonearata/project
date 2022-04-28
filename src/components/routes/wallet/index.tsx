@@ -10,28 +10,64 @@ import {
   Th,
   Thead,
   Tr,
-  useDisclosure,
+  VStack,
 } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { IItemContext, useItem } from "../../../provider/item-provider";
-import { PieChart, Pie, ResponsiveContainer } from "recharts";
+import { PieChart, Pie } from "recharts";
 import FormTitle from "../../form-title";
-import { fetchApiDelete, fetchApiGet, fetchApiPut } from "../../../api";
-import { IITem, IItemResponse } from "../../../interfaces/i-items";
+import {
+  fetchApiDelete,
+  fetchApiGet,
+  fetchGetItems,
+  IStock,
+} from "../../../api";
+import { IItemResponse } from "../../../interfaces/i-items";
+import { useProjectStore } from "../../../zust";
 
 function Wallet() {
-  const { items, setItems, setTakeId, editStock }: IItemContext = useItem();
+  const { editStock }: IItemContext = useItem();
+
+  const { items, dataProvider, setItems, setDataProvider, setTakeId, date } =
+    useProjectStore((state) => ({
+      items: state.items,
+      dataProvider: state.dataProvider,
+      setItems: state.setItems,
+      setDataProvider: state.setDataProvider,
+      setTakeId: state.setTakeId,
+      date: state.date,
+    }));
+
   const [error, setError] = useState<boolean>(false);
+  let yourDate = new Date();
+  let todayPrice = `${yourDate.getFullYear()}-0${yourDate.getMonth() + 1}-${
+    yourDate.getDate() - 1
+  }`;
 
   useEffect(() => {
-    fetchApiGet<IItemResponse>("stocks")
-      .then((data) => {
-        setItems(data);
+    const f = fetchApiGet<IItemResponse>("stocks")
+      .then((stockResult) => {
+        console.log(stockResult);
       })
       .catch((err) => {
         setError(true);
         console.log(err);
       });
+
+    const g = items?.data?.forEach((item, index) => {
+      const { attributes, id } = item;
+      console.log(dataProvider);
+
+      fetchGetItems<IStock>(
+        `${attributes?.isin}/${todayPrice}?adjusted=true&`
+      ).then((data) => {
+        return setDataProvider([...dataProvider, data]);
+      });
+    });
+
+    Promise.all([f, g]).then((value) => {
+      console.log(value);
+    });
   }, []);
 
   const getId = (id: number) => {
@@ -58,22 +94,30 @@ function Wallet() {
     });
   };
 
+  /* const ciao = stockA.map((item) => {
+    console.log(item);
+    return fetchGetItems<IStock>(`${item}/range/1/day/${date}/${date}`).then(
+      (data) => {
+        console.log(data);
+        setDataProvider([...dataProvider, data]);
+      }
+    );
+  });
+ */
+
+  console.log(dataProvider);
+
   return (
     <Box mt={"10px"} position={"relative"} pt={"50px"}>
       <Box position={"absolute"} right={"33px"} top={"-12px"}>
         <FormTitle />
       </Box>
-      <HStack
+      <VStack
         justifyContent={"space-around"}
         px={"100px"}
         alignItems={"flex-start"}
       >
-        <Box
-          p={"30px"}
-          border={"1px solid black"}
-          borderRadius={"15px"}
-          width={"50%"}
-        >
+        <Box p={"30px"} border={"1px solid black"} borderRadius={"15px"}>
           <Text fontSize="2xl" mb={"30px"}>
             Portafoglio
           </Text>
@@ -83,11 +127,12 @@ function Wallet() {
                 <Th>Isin</Th>
                 <Th>Quantità</Th>
                 <Th>Prezzo d'acquisto</Th>
-                <Th></Th>
+                <Th>Prezzo attuale</Th>
+                <Th>Profitto</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {items?.data?.map((item, index) => {
+              {items?.data?.map((item) => {
                 const { attributes, id } = item;
                 return (
                   <Tr key={"isin:" + attributes?.isin}>
@@ -96,6 +141,17 @@ function Wallet() {
                     </Td>
                     <Td>{attributes?.quantity}</Td>
                     <Td>{attributes?.price}</Td>
+                    {dataProvider.map((data) => {
+                      return (
+                        <>
+                          <Td>{data?.close}</Td>
+                          <Td>
+                            {(data?.close - attributes?.price) *
+                              attributes?.quantity}
+                          </Td>
+                        </>
+                      );
+                    })}
                     <Td>
                       <Button
                         onClick={() => {
@@ -106,7 +162,7 @@ function Wallet() {
                       </Button>
                       <Button
                         onClick={() => {
-                          editStock(index);
+                          editStock(id);
                         }}
                       >
                         Modifica
@@ -126,13 +182,6 @@ function Wallet() {
             </Tfoot>
           </Table>
         </Box>
-        <Button
-          onClick={() => {
-            console.log(items.data);
-          }}
-        >
-          cc
-        </Button>
         <Box width={"50%"}>
           <PieChart width={800} height={400}>
             <Pie
@@ -147,7 +196,7 @@ function Wallet() {
             />
           </PieChart>
         </Box>
-      </HStack>
+      </VStack>
     </Box>
   );
 }

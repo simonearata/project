@@ -4,6 +4,7 @@ import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 import React from "react";
 import { IItemContext, useItem } from "../../provider/item-provider";
+import { useProjectStore } from "../../zust";
 
 interface IAction {
   title: string;
@@ -12,7 +13,7 @@ interface IAction {
 }
 
 function Home() {
-  const { items, setItems }: IItemContext = useItem();
+  const items = useProjectStore((state) => state.items);
 
   const actions: IAction[] = [
     { title: "action1", description: "", icon: "" },
@@ -45,10 +46,10 @@ function Home() {
       <HStack justifyContent={"space-between"}>
         <VStack>
           <Text fontSize="6xl" fontWeight={"bold"}>
-            monitor your wallet
+            Monitor your wallet
           </Text>
           <Text fontSize={"4xl"} mt="20px">
-            you can track and create your portfolio.
+            You can track and create your portfolio.
           </Text>
           <HStack>
             <Button w={"150px"} h={"50px"} mr={"5px"}>
